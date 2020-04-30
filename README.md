@@ -13,6 +13,7 @@ ecs cluster and include a full ci and deploy pipeline.
 6. Codebuild to run unit tests on the github repo, triggered on every PR open, or change of a PR
 7. Codepipeline to deploy to the ECS repo
 8. Notifications to an SNS topic when the service is down
+9. Optionally a Cognito User Pool for OpenID Authentication
 
 ## What's required
 
