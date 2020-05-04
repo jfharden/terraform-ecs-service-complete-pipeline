@@ -35,6 +35,6 @@ ecs cluster and include a full ci and deploy pipeline.
 
 The project is broken up into the following folders
 
+* / - terraform module in the root of the repo
 * examples - full featured examples which the tests use to deploy and destroy the module
-* module - terraform module
-* tests - terratest tests of the module
+* test - terratest tests of the module
