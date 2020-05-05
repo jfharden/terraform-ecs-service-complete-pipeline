@@ -101,8 +101,6 @@ func TestServicePipeline(t *testing.T) {
 }
 
 func ValidateECR(t *testing.T, testData *TestData) {
-	t.Parallel()
-
 	// Check the ARN is as expected
 	accountID := aws.GetAccountId(t)
 	expectedEcrArn := fmt.Sprintf("arn:aws:ecr:eu-west-1:%s:repository/%s", accountID, testData.RandomName)
