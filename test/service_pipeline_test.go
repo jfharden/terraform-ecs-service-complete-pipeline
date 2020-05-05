@@ -6,6 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	awsSdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
+
 	"github.com/gruntwork-io/terratest/modules/aws"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -97,6 +101,8 @@ func TestServicePipeline(t *testing.T) {
 }
 
 func ValidateECR(t *testing.T, testData *TestData) {
+	t.Parallel()
+
 	// Check the ARN is as expected
 	accountID := aws.GetAccountId(t)
 	expectedEcrArn := fmt.Sprintf("arn:aws:ecr:eu-west-1:%s:repository/%s", accountID, testData.RandomName)
@@ -112,5 +118,73 @@ func ValidateECR(t *testing.T, testData *TestData) {
 	imageTagMutability := terraform.Output(t, testData.TerraformOptions, "ecr_image_tag_mutability")
 	assert.Equal(t, "IMMUTABLE", imageTagMutability, "Image tags are mutable")
 
-	// TODO: Need to add test for tags
+	// Check the tags are correct
+	awsSession, err := session.NewSession(
+		&awsSdk.Config{
+			Region: awsSdk.String(testData.AwsRegion),
+		},
+	)
+
+	actualTags, err := getECRTags(ecrArn, awsSession)
+	if err != nil {
+		t.Errorf("Couldn't request tags for ECR repository: %s", err)
+	}
+
+	expectedTags := map[string]string{
+		"TerraformTest": testData.RandomName,
+		"Stage":         "test",
+	}
+
+	assertEcrTagsMatch(t, expectedTags, actualTags)
+}
+
+func getECRTags(ecrArn string, awsSession *session.Session) ([]*ecr.Tag, error) {
+	ecrService := ecr.New(awsSession)
+
+	tagRequest, tagResponse := ecrService.ListTagsForResourceRequest(
+		&ecr.ListTagsForResourceInput{
+			ResourceArn: awsSdk.String(ecrArn),
+		},
+	)
+
+	err := tagRequest.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return tagResponse.Tags, nil
+}
+
+func assertEcrTagsMatch(t *testing.T, expected map[string]string, actual []*ecr.Tag) {
+	equalNumberOfTags := assert.Equal(t,
+		len(expected),
+		len(actual),
+		fmt.Sprintf(
+			"Number of tags expected [%v] does match actual number of tags [%v]. Expected: %v Actual: %v",
+			len(expected),
+			len(actual),
+			expected,
+			actual,
+		),
+	)
+
+	if !equalNumberOfTags {
+		return
+	}
+
+	for _, tag := range actual {
+		actualKey := awsSdk.StringValue(tag.Key)
+		actualValue := awsSdk.StringValue(tag.Value)
+
+		expectedValue, tagInExpected := expected[actualKey]
+		if !tagInExpected {
+			t.Errorf("Error: Tag key %s in actual, but not expected\n", actualKey)
+			return
+		}
+
+		if !(expectedValue == actualValue) {
+			t.Errorf("Error: Tag with key %s has value %s but we expected %s", actualKey, actualValue, expectedValue)
+			return
+		}
+	}
 }
