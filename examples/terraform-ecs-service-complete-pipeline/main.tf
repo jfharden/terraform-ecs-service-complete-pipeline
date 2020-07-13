@@ -7,4 +7,6 @@ module "service_pipeline" {
 
   name = var.name
   tags = var.tags
+
+  github_url = "https://github.com/jfharden/template-php-docker-site.git"
 }

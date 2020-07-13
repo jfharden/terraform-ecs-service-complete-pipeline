@@ -31,6 +31,7 @@
 * 1. go 1.13+ for running the tests
 * 2. terraform 0.12 to use the module
 * 3. AWS account to deploy
+* 4. Terraform 0.12
 *
 * ## Project layout
 *

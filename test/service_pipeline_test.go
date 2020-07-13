@@ -8,6 +8,7 @@ import (
 
 	awsSdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/codebuild"
 	"github.com/aws/aws-sdk-go/service/ecr"
 
 	"github.com/gruntwork-io/terratest/modules/aws"
@@ -87,6 +88,7 @@ func TestServicePipeline(t *testing.T) {
 
 	validators := map[string]func(*testing.T, *TestData){
 		"ValidateECRRepository": ValidateECR,
+		"ValidateCodebuildCI":   ValidateCodebuildCI,
 	}
 
 	test_structure.RunTestStage(t, "validate", func() {
@@ -98,6 +100,21 @@ func TestServicePipeline(t *testing.T) {
 			})
 		}
 	})
+}
+
+func ValidateCodebuildCI(t *testing.T, testData *TestData) {
+	// Start build
+	&codebuild.startBuildInput{
+		ProjectName: fmt.Sprintf("ci-%s", randomName),
+		// SourceVersion: "master",
+	}
+	// Wait for completion
+	// Check it was successful
+}
+
+func ValidateCodebuildCiWebhook(t *testing.T, testData *TestData) {
+	// Make sure there is a webhook
+	// Make sure the webhook is sensible
 }
 
 func ValidateECR(t *testing.T, testData *TestData) {
